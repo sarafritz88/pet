@@ -28,6 +28,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Rebuild uiohook-napi (and any other native addons) against Electron's
+      # ABI before Forge packages the app. Forge's own rebuild step will then
+      # find them already built and skip recompiling.
+      - name: Rebuild native modules for Electron
+        run: npx @electron/rebuild -f -w uiohook-napi
+        env:
+          ELECTRON_VERSION: '40.6.0'
+
       - name: Build Windows installer
         run: npm run make
 
