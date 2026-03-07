@@ -382,6 +382,7 @@ export default function App() {
       if (!dragStarted) {
         dragStarted = true;
         didDrag.current = true;
+        document.body.style.cursor = 'grabbing'; // lock cursor globally so it doesn't flicker on Windows
         window.dispatchEvent(new CustomEvent('pet-drag-start'));
       }
       window.electronAPI?.moveWindow(dx, dy);
@@ -389,6 +390,7 @@ export default function App() {
 
     function onUp() {
       dragging.current = false;
+      document.body.style.cursor = ''; // release cursor lock
       if (dragStarted) window.dispatchEvent(new CustomEvent('pet-drag-end'));
       window.removeEventListener('mousemove', onMove);
       window.removeEventListener('mouseup',   onUp);
@@ -519,6 +521,7 @@ export default function App() {
                 data-index={i}
                 d={computeWedgePathD(i, pieItems.length)}
                 fill="transparent"
+                fillRule="evenodd"
                 style={{ cursor: 'pointer' }}
                 onMouseEnter={() => {
                   setHoveredWedgeIndex(i);
