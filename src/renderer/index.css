@@ -1,0 +1,421 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  background: transparent !important;
+  overflow: hidden;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pet-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  background: rgba(0, 0, 0, 0.01);
+  overflow: visible;
+}
+
+/* Canvas (pet) sits above the pie menu. Center is hollow so clicks on the pet hit the canvas. */
+.pet-container canvas {
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+}
+
+/* ── Radial pie menu (ring only; center is hollow for pet clicks) ──────── */
+.pie-menu {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 180px;
+  height: 180px;
+  top: 30px;
+  padding-bottom: 40px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 2;
+  pointer-events: none;
+}
+.pie-menu .pie-menu-svg {
+  pointer-events: none;
+}
+.pie-menu .pie-menu-svg .pie-wedge {
+  pointer-events: auto;
+}
+
+.pet-container:hover .pie-menu,
+.pet-container.has-expired-timer .pie-menu {
+  opacity: 1;
+}
+
+/* Pie crust slices: ring segments, fade from transparent near pet to solid at outer edge. */
+.pie-section {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  /* Inner radius 38%: transparent near pet, more solid toward outer edge */
+  background: radial-gradient(
+    circle at 50% 50%,
+    transparent 38%,
+    rgba(30, 30, 46, 0.08) 55%,
+    rgba(30, 30, 46, 0.22) 85%,
+    rgba(30, 30, 46, 0.28) 100%
+  );
+  border: 1px solid transparent;
+  box-shadow: inset 0 0 0 1px rgba(205, 214, 244, 0.06);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
+  cursor: pointer;
+}
+
+.pie-section:hover,
+.pie-section.pie-section-hovered {
+  background: radial-gradient(
+    circle at 50% 50%,
+    transparent 38%,
+    rgba(30, 30, 46, 0.15) 55%,
+    rgba(30, 30, 46, 0.45) 85%,
+    rgba(30, 30, 46, 0.55) 100%
+  );
+  box-shadow: inset 0 0 0 1px rgba(205, 214, 244, 0.15);
+  transform: translate(var(--hover-tx, 0px), var(--hover-ty, 0px));
+}
+
+/* Timer just finished: section stays visible with a slight red tint */
+.pie-section-timer-finished {
+  background: radial-gradient(
+    circle at 50% 50%,
+    transparent 38%,
+    rgba(243, 139, 168, 0.06) 55%,
+    rgba(243, 139, 168, 0.18) 85%,
+    rgba(243, 139, 168, 0.24) 100%
+  );
+  box-shadow: inset 0 0 0 1px rgba(243, 139, 168, 0.12);
+}
+
+.pie-section-timer-finished:hover,
+.pie-section-timer-finished.pie-section-hovered {
+  background: radial-gradient(
+    circle at 50% 50%,
+    transparent 38%,
+    rgba(243, 139, 168, 0.1) 55%,
+    rgba(243, 139, 168, 0.3) 85%,
+    rgba(243, 139, 168, 0.4) 100%
+  );
+  box-shadow: inset 0 0 0 1px rgba(243, 139, 168, 0.2);
+}
+
+/* SVG hit layer: ring segments only; center has no path so clicks hit the pet */
+.pie-menu-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Icon sitting at the centroid of each wedge */
+.pie-section-icon {
+  position: absolute;
+  pointer-events: none;
+  font-size: 22px;
+  line-height: 1;
+  user-select: none;
+  transform: translate(-50%, -50%);
+}
+
+.pie-section-icon img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+/* When timer is running, icon is replaced by countdown in same spot */
+.pie-section-icon-countdown {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: #89b4fa;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.pie-section-icon-paused {
+  color: #a6adc8;
+}
+
+/* Countdown shown inside the pie slice (position set inline from wedge angle) */
+.pie-section-timer {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: #89b4fa;
+  pointer-events: none;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Overlay for completion message + buttons (above SVG so buttons are clickable) */
+.pie-timer-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.pie-section-timer-wrap {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 11px;
+  color: #cdd6f4;
+  text-align: center;
+}
+
+.pie-section-timer-running {
+  justify-content: center;
+}
+
+.pie-section-timer-countdown {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: #89b4fa;
+}
+
+.pie-section-timer-message {
+  font-weight: 600;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.pie-section-timer-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.pie-section-timer-btn {
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(137, 180, 250, 0.2);
+  color: #cdd6f4;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pie-section-timer-btn:hover {
+  background: rgba(137, 180, 250, 0.35);
+}
+
+.pie-section-timer-btn-start { color: #89b4fa; }
+.pie-section-timer-btn-stop { color: #f38ba8; }
+
+/* Tooltip shown when hovering a pie wedge */
+.pie-tooltip {
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(30, 30, 46, 0.92);
+  color: #cdd6f4;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 10px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 2;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* Timer bubble above the pet (Pomodoro, etc.) — buttons need pointer-events */
+.timer-bubble {
+  position: absolute;
+  bottom: 150px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  pointer-events: auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  transition: opacity 0.4s ease;
+}
+
+.timer-bubble-inner {
+  background: rgba(30, 30, 46, 0.95);
+  color: #cdd6f4;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(137, 180, 250, 0.25);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  text-align: center;
+  min-width: 140px;
+  max-width: 220px;
+}
+
+.timer-bubble-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #a6adc8;
+  margin-bottom: 4px;
+}
+
+.timer-bubble-time {
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: #cdd6f4;
+  word-break: break-word;
+  white-space: normal;
+  line-height: 1.3;
+}
+
+.timer-bubble-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.timer-bubble-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(137, 180, 250, 0.2);
+  color: #cdd6f4;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.timer-bubble-btn:hover {
+  background: rgba(137, 180, 250, 0.35);
+}
+
+.timer-bubble-btn:active {
+  transform: scale(0.95);
+}
+
+.timer-bubble-btn-start {
+  color: #89b4fa;
+}
+
+.timer-bubble-btn-stop {
+  color: #f38ba8;
+}
+
+.timer-bubble-tail {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  margin-left: -6px;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid rgba(30, 30, 46, 0.95);
+  filter: drop-shadow(0 1px 0 rgba(137, 180, 250, 0.2));
+}
+
+/* Achievement bubble above the pet */
+.achievement-bubble {
+  position: absolute;
+  bottom: 95px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  pointer-events: none;
+  animation: achievement-pop 0.35s ease-out;
+  background: rgba(49, 50, 68, 0.98);
+  color: #cdd6f4;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(137, 180, 250, 0.25);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 12px;
+  text-align: center;
+  line-height: 1.35;
+  max-width: 200px;
+}
+
+.achievement-bubble::before {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  margin-left: -8px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid rgba(49, 50, 68, 0.98);
+}
+
+@keyframes achievement-pop {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+.achievement-bubble-line {
+  margin-bottom: 4px;
+}
+
+.achievement-bubble-line:last-of-type {
+  margin-bottom: 0;
+}
+
+.achievement-bubble-footer {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(137, 180, 250, 0.2);
+  font-weight: 600;
+  color: #a6e3a1;
+}
