@@ -3,10 +3,10 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 
 module.exports = {
   packagerConfig: {
-    asar: true,
-    // Native .node addons (e.g. uiohook-napi) cannot be loaded from inside an
-    // asar archive — they must sit in app.asar.unpacked on disk.
-    asarUnpack: ['**/*.node', '**/node_modules/uiohook-napi/**'],
+    // asar disabled: uiohook-napi is a native addon whose .node file cannot
+    // be reliably loaded from inside an asar archive across platforms.
+    // Without asar the files sit plain on disk and load without issues.
+    asar: false,
     // Platform packagers pick the right extension automatically:
     // macOS → assets/icon.icns, Windows → assets/icon.ico, Linux → assets/icon.png
     icon: 'assets/icon',
@@ -36,18 +36,14 @@ module.exports = {
   ],
   plugins: [
     {
-      // Ensures native .node files (like uiohook-napi) are unpacked from asar
       name: '@electron-forge/plugin-auto-unpack-natives',
       config: {},
     },
     {
       name: '@electron-forge/plugin-vite',
       config: {
-        // `build` can specify multiple entry builds, which can be Main process, Preload scripts, Worker process, etc.
-        // If you are familiar with Vite configuration, it will look really familiar.
         build: [
           {
-            // `entry` is just an alias for `build.lib.entry` in the corresponding file of `config`.
             entry: 'src/main/index.js',
             config: 'vite.main.config.mjs',
             target: 'main',
@@ -66,16 +62,15 @@ module.exports = {
         ],
       },
     },
-    // Fuses are used to enable/disable various Electron functionality
-    // at package time, before code signing the application
     new FusesPlugin({
       version: FuseVersion.V1,
       [FuseV1Options.RunAsNode]: false,
       [FuseV1Options.EnableCookieEncryption]: true,
       [FuseV1Options.EnableNodeOptionsEnvironmentVariable]: false,
       [FuseV1Options.EnableNodeCliInspectArguments]: false,
-      [FuseV1Options.EnableEmbeddedAsarIntegrityValidation]: true,
-      [FuseV1Options.OnlyLoadAppFromAsar]: true,
+      // These two fuses require asar — disabled since asar is off
+      [FuseV1Options.EnableEmbeddedAsarIntegrityValidation]: false,
+      [FuseV1Options.OnlyLoadAppFromAsar]: false,
     }),
   ],
 };
