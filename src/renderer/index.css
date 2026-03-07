@@ -241,10 +241,11 @@ body {
 .pie-section-timer-btn-start { color: #89b4fa; }
 .pie-section-timer-btn-stop { color: #f38ba8; }
 
-/* Tooltip shown when hovering a pie wedge */
+/* Tooltip shown when hovering a pie wedge — positioned inside .pie-menu so it
+   sits just below the ring on all platforms (avoids Windows transparent-window offset) */
 .pie-tooltip {
   position: absolute;
-  bottom: 2px;
+  bottom: -20px;
   left: 50%;
   transform: translateX(-50%);
   background: rgba(30, 30, 46, 0.92);

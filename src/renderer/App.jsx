@@ -588,11 +588,11 @@ export default function App() {
               );
             })}
           </div>
-        </div>
-      )}
-      {hoveredWedgeIndex !== null && pieItems[hoveredWedgeIndex] && (
-        <div className="pie-tooltip">
-          {getPieItemTitle(pieItems[hoveredWedgeIndex])}
+          {hoveredWedgeIndex !== null && pieItems[hoveredWedgeIndex] && (
+            <div className="pie-tooltip">
+              {getPieItemTitle(pieItems[hoveredWedgeIndex])}
+            </div>
+          )}
         </div>
       )}
       {!hidePet && petType != null && <Pet state={state} animConfig={animConfig} spriteSet={petType} />}
