@@ -8,6 +8,9 @@ on:
   # Also allow triggering manually from the Actions tab for testing
   workflow_dispatch:
 
+permissions:
+  contents: write  # required to create GitHub Releases
+
 jobs:
   build:
     runs-on: windows-latest
