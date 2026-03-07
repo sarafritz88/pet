@@ -14,6 +14,8 @@ module.exports = {
       name: '@electron-forge/maker-squirrel',
       config: {
         setupIcon: 'assets/icon.ico',
+        // Name of the generated setup exe (spaces not allowed here)
+        setupExe: 'DesktopPetSetup.exe',
       },
     },
     {
