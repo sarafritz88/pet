@@ -473,9 +473,19 @@ ipcMain.on('open-external', (_, url) => {
 // Pick an application (file or .app bundle on macOS)
 ipcMain.handle('show-open-dialog-app', async (event) => {
   const win = BrowserWindow.fromWebContents(event.sender);
+  const isMac = process.platform === 'darwin';
+  const isWin = process.platform === 'win32';
   const result = await dialog.showOpenDialog(win, {
     title: 'Select Application',
-    properties: ['openFile', 'openDirectory'], // .app on macOS is a directory
+    // macOS: .app bundles are directories, so openDirectory is needed there.
+    // Windows: openDirectory hides .exe files — use openFile only with an exe filter.
+    properties: isMac ? ['openFile', 'openDirectory'] : ['openFile'],
+    ...(isWin && {
+      filters: [
+        { name: 'Applications', extensions: ['exe'] },
+        { name: 'All Files', extensions: ['*'] },
+      ],
+    }),
   });
   if (result.canceled || result.filePaths.length === 0) return { path: null };
   return { path: result.filePaths[0] };
