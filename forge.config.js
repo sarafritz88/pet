@@ -36,10 +36,6 @@ module.exports = {
   ],
   plugins: [
     {
-      name: '@electron-forge/plugin-auto-unpack-natives',
-      config: {},
-    },
-    {
       name: '@electron-forge/plugin-vite',
       config: {
         build: [
