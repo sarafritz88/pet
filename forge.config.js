@@ -4,6 +4,9 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 module.exports = {
   packagerConfig: {
     asar: true,
+    // Native .node addons (e.g. uiohook-napi) cannot be loaded from inside an
+    // asar archive — they must sit in app.asar.unpacked on disk.
+    asarUnpack: ['**/*.node', '**/node_modules/uiohook-napi/**'],
     // Platform packagers pick the right extension automatically:
     // macOS → assets/icon.icns, Windows → assets/icon.ico, Linux → assets/icon.png
     icon: 'assets/icon',
