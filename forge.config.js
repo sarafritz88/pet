@@ -1,5 +1,27 @@
+const path = require('path');
+const fs = require('fs');
 const { FusesPlugin } = require('@electron-forge/plugin-fuses');
 const { FuseV1Options, FuseVersion } = require('@electron/fuses');
+
+// Copy native deps into the packaged app's node_modules so require('uiohook-napi') resolves.
+// @electron/packager only supports extraResource (string[]), which copies to resources/ root,
+// not into the app dir. afterCopy runs with buildPath = the app dir (resources/app).
+function copyNativeModules(buildPath, _electronVersion, _platform, _arch, callback) {
+  const destDir = path.join(buildPath, 'node_modules');
+  const src = path.join(__dirname, 'node_modules');
+  try {
+    fs.mkdirSync(destDir, { recursive: true });
+    fs.cpSync(path.join(src, 'uiohook-napi'), path.join(destDir, 'uiohook-napi'), {
+      recursive: true,
+    });
+    fs.cpSync(path.join(src, 'node-gyp-build'), path.join(destDir, 'node-gyp-build'), {
+      recursive: true,
+    });
+  } catch (err) {
+    return callback(err);
+  }
+  callback();
+}
 
 module.exports = {
   packagerConfig: {
@@ -7,17 +29,10 @@ module.exports = {
     // Platform packagers pick the right extension automatically:
     // macOS → assets/icon.icns, Windows → assets/icon.ico, Linux → assets/icon.png
     icon: 'assets/icon',
-    // The Forge Vite plugin only packages the built .vite/ output, so
-    // node_modules are not included automatically. Explicitly copy uiohook-napi
-    // and its loader (node-gyp-build) into resources/node_modules/ so Node.js
-    // finds them when walking up from resources/app/.vite/build/index.js.
-    extraResources: [
-      // Electron's module resolver only looks inside resources/app/, not resources/.
-      // Place native deps inside resources/app/node_modules/ so Node finds them when
-      // walking up from resources/app/.vite/build/index.js.
-      { from: 'node_modules/uiohook-napi', to: 'app/node_modules/uiohook-napi' },
-      { from: 'node_modules/node-gyp-build', to: 'app/node_modules/node-gyp-build' },
-    ],
+    // Vite plugin only packages .vite/ output; node_modules are not included.
+    // afterCopy puts uiohook-napi + node-gyp-build in app/node_modules/ so Node
+    // finds them when resolving from app/.vite/build/index.js.
+    afterCopy: [copyNativeModules],
   },
   // uiohook-napi ships N-API prebuilts (prebuilds/win32-x64/node.napi.node)
   // that are ABI-stable and work with Electron without recompilation.
