@@ -12,8 +12,11 @@ module.exports = {
     // and its loader (node-gyp-build) into resources/node_modules/ so Node.js
     // finds them when walking up from resources/app/.vite/build/index.js.
     extraResources: [
-      { from: 'node_modules/uiohook-napi', to: 'node_modules/uiohook-napi' },
-      { from: 'node_modules/node-gyp-build', to: 'node_modules/node-gyp-build' },
+      // Electron's module resolver only looks inside resources/app/, not resources/.
+      // Place native deps inside resources/app/node_modules/ so Node finds them when
+      // walking up from resources/app/.vite/build/index.js.
+      { from: 'node_modules/uiohook-napi', to: 'app/node_modules/uiohook-napi' },
+      { from: 'node_modules/node-gyp-build', to: 'app/node_modules/node-gyp-build' },
     ],
   },
   // uiohook-napi ships N-API prebuilts (prebuilds/win32-x64/node.napi.node)
