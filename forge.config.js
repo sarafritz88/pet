@@ -11,7 +11,10 @@ module.exports = {
     // macOS → assets/icon.icns, Windows → assets/icon.ico, Linux → assets/icon.png
     icon: 'assets/icon',
   },
-  rebuildConfig: {},
+  // uiohook-napi ships N-API prebuilts (prebuilds/win32-x64/node.napi.node)
+  // that are ABI-stable and work with Electron without recompilation.
+  // Rebuilding from source corrupts the prebuilt, so we skip it entirely.
+  rebuildConfig: { onlyModules: [] },
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
