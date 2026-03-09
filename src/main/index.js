@@ -568,10 +568,16 @@ const createWindow = () => {
     hasShadow: false,
     resizable: false,
     skipTaskbar: true,
+    // show:false + ready-to-show ensures the transparent window is only presented
+    // once the compositor (DWM on Windows) has the content ready, preventing it
+    // from being created in an invisible/uninitialized state.
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
     },
   });
+
+  mainWindow.once('ready-to-show', () => mainWindow.show());
 
   mainWindow.on('moved', () => {
     const [x, y] = mainWindow.getPosition();
